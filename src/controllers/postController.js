@@ -51,9 +51,26 @@ async function getMyPosts(req, res, next) {
 async function updatePost(req, res, next) {
   try {
     const id = parseInt(req.params.id);
-    const { title, content } = req.body;
 
-    const post = await postService.updatePost(id, title, content);
+    if (isNaN(id)) {
+      return res.status(400).json({ error: "ID inválido" });
+    }
+
+    const { title, content, completed } = req.body;
+
+    if (
+      title === undefined &&
+      content === undefined &&
+      completed === undefined
+    ) {
+      return res.status(400).json({ error: "Nada que actualizar" });
+    }
+
+    const post = await postService.updatePost(id, {
+      title,
+      content,
+      completed,
+    });
 
     res.json(post);
   } catch (error) {

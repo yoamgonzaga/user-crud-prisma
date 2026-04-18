@@ -7,14 +7,17 @@ async function createPost(title, content, userId) {
   });
 
   if (!user) {
-    throw { code: "P2025", message: "Usuario no existe" };
+    const error = new Error("Usuario no existe");
+    error.code = "P2025";
+    throw error;
   }
 
-  return await prisma.post.create({
+  return prisma.post.create({
     data: {
       title,
       content,
       userId,
+      completed: false,
     },
   });
 }
@@ -34,25 +37,39 @@ async function getPosts() {
 }
 
 async function getPostsByUser(userId) {
-  return await prisma.post.findMany({
+  return prisma.post.findMany({
     where: { userId },
     select: {
       id: true,
       title: true,
-      content: true, // opcional según tu caso
+      content: true,
+      completed: true,
     },
   });
 }
 
-async function updatePost(id, title, content) {
-  return await prisma.post.update({
-    where: { id },
-    data: { title, content },
-  });
+async function updatePost(id, { title, content, completed }) {
+  const data = {};
+
+  if (title !== undefined) data.title = title;
+  if (content !== undefined) data.content = content;
+  if (completed !== undefined) data.completed = completed;
+
+  try {
+    return await prisma.post.update({
+      where: { id },
+      data,
+    });
+  } catch (error) {
+    if (error.code === "P2025") {
+      throw new Error("Post no encontrado");
+    }
+    throw error;
+  }
 }
 
 async function deletePost(id) {
-  return await prisma.post.delete({
+  return prisma.post.delete({
     where: { id },
   });
 }
